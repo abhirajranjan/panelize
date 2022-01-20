@@ -2,7 +2,7 @@ from PyQt6 import QtWidgets, QtGui, QtCore
 import configParser 
 import typing
 import warnings
-from pipe import *
+from pipe.pipe import *
 import module
 
 
