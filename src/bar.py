@@ -2,11 +2,16 @@ from PyQt6 import QtWidgets, QtGui, QtCore
 import configParser 
 import typing
 import warnings
+from pipe import *
+import module
 
 
 class Bar(QtWidgets.QWidget):
+    MODULES = dict()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.setLayout(QtWidgets.QHBoxLayout())
         self.config = self.loadconfig()
         self.setvars()
 
@@ -20,9 +25,14 @@ class Bar(QtWidgets.QWidget):
         return val
 
     def setvars(self):
-        self.setPosVar(self.get(self.config, ['bar/main']))
+        self.loadPosition(self.get(self.config, ['bar/main']))
+        
+        modules = list(self.config | where(lambda x: x.startswith('module')))
+        self.MODULES = {i.split('/')[1]:self.config[i] for i in modules}
+        
+        self.loadbar()
 
-    def setPosVar(self, config):
+    def loadPosition(self, config):
         screen = QtWidgets.QApplication.instance().primaryScreen()
         geo = screen.availableGeometry()
         rect = QtCore.QRect(0, 0, 0, 0)
@@ -51,3 +61,23 @@ class Bar(QtWidgets.QWidget):
             else:
                 warnings.warn("[Config Warning] coord value set with incorrect amount of parameters")
         self.setGeometry(rect)
+
+    def loadbar(self):
+        if 'module-left' in self.config['bar/main']:
+            leftModule = self.config['bar/main']['module-left'].split()
+            leftModuleWidget = module.module(self)
+            leftModuleWidget.setupModule(leftModule, self.MODULES)
+            self.layout().addWidget(leftModuleWidget)
+
+        if 'module-center' in self.config['bar/main']:
+            centerModule = self.config['bar/main']['module-center'].split()
+            centerModuleWidget = module.module(self)
+            centerModuleWidget.setupModule(centerModule, self.MODULES)
+            self.layout().addWidget(centerModuleWidget)
+            
+        if 'module-right' in self.config['bar/main']:
+            rightModule = self.config['bar/main']['module-right'].split()
+            rightModuleWidget = module.module(self)
+            rightModuleWidget.setupModule(rightModule, self.MODULES)
+            self.layout().addWidget(rightModuleWidget)
+            
